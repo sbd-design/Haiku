@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Haiku</string>
+    <string name="service_name">Haiku Listener</string>
+    <string name="service_running">Haiku is listening</string>
+    <string name="channel_haiku_name">Haiku</string>
+    <string name="channel_haiku_description">Your notifications, distilled into poetry</string>
+    <string name="channel_service_name">Background listener</string>
+</resources>
