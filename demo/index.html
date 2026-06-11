@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Haiku — Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0d0d0d;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── Bokeh wallpaper ── */
+    .bokeh {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .bokeh span {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.12;
+    }
+    .bokeh span:nth-child(1) { width: 400px; height: 400px; background: #8a5cf6; top: -100px; left: -80px; }
+    .bokeh span:nth-child(2) { width: 350px; height: 350px; background: #3b82f6; top: 30%;  right: -60px; }
+    .bokeh span:nth-child(3) { width: 300px; height: 300px; background: #ec4899; bottom: -80px; left: 20%; }
+    .bokeh span:nth-child(4) { width: 200px; height: 200px; background: #f59e0b; bottom: 15%; right: 10%; opacity: 0.08; }
+
+    /* ── Phone frame ── */
+    .phone {
+      position: relative;
+      width: 340px;
+      height: 680px;
+      background: #111;
+      border-radius: 52px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      box-shadow:
+        0 0 0 8px #1a1a1a,
+        0 0 0 9px rgba(255,255,255,0.06),
+        0 40px 80px rgba(0,0,0,0.7);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* Side buttons */
+    .phone::before {
+      content: '';
+      position: absolute;
+      left: -10px;
+      top: 120px;
+      width: 4px;
+      height: 36px;
+      background: #1a1a1a;
+      border-radius: 2px 0 0 2px;
+      box-shadow: 0 50px 0 #1a1a1a, 0 90px 0 #1a1a1a;
+    }
+    .phone::after {
+      content: '';
+      position: absolute;
+      right: -10px;
+      top: 160px;
+      width: 4px;
+      height: 60px;
+      background: #1a1a1a;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* Wallpaper */
+    .screen {
+      position: absolute;
+      inset: 0;
+      border-radius: 50px;
+      background: radial-gradient(ellipse at 30% 20%, #1e1040 0%, #0a0a1a 60%);
+      overflow: hidden;
+    }
+
+    /* Subtle stars */
+    .stars {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px);
+      background-size: 120px 120px, 80px 80px, 60px 60px;
+      background-position: 0 0, 40px 40px, 20px 60px;
+      opacity: 0.4;
+    }
+
+    /* Dynamic island */
+    .island {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 32px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 10;
+    }
+
+    /* Status bar */
+    .status-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 28px 8px;
+      z-index: 5;
+    }
+    .status-time {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.8);
+      letter-spacing: 0.02em;
+    }
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255,255,255,0.8);
+    }
+    .status-icons svg { width: 14px; height: 14px; }
+
+    /* Clock */
+    .lock-clock {
+      position: absolute;
+      top: 90px;
+      left: 0;
+      right: 0;
+      text-align: center;
+    }
+    .clock-time {
+      font-size: 72px;
+      font-weight: 300;
+      color: #fff;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+    .clock-date {
+      margin-top: 6px;
+      font-size: 15px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Notification cards ── */
+    .notif-area {
+      position: absolute;
+      bottom: 110px;
+      left: 16px;
+      right: 16px;
+    }
+
+    .notif-card {
+      width: 100%;
+      border-radius: 20px;
+      padding: 14px 16px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    /* Message card (frosted) */
+    .notif-message {
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.1);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .notif-message.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Haiku card */
+    .notif-haiku {
+      background: rgba(20,10,40,0.75);
+      border: 1px solid rgba(255,255,255,0.08);
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+    .notif-haiku.visible {
+      opacity: 1;
+    }
+
+    /* Card header */
+    .notif-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .notif-app-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+    .icon-messages { background: linear-gradient(135deg, #3ddc84, #2eb872); }
+    .icon-haiku    { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+
+    .notif-app-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      flex: 1;
+    }
+    .notif-time {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* Message content */
+    .notif-sender {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.95);
+      margin-bottom: 3px;
+    }
+    .notif-text {
+      font-size: 13px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.45;
+    }
+
+    /* Haiku content */
+    .haiku-lines {
+      font-family: 'Lora', Georgia, serif;
+      font-style: italic;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.95);
+      line-height: 1.7;
+      letter-spacing: 0.01em;
+    }
+    .haiku-source {
+      margin-top: 10px;
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 400;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Transform indicator ── */
+    .transform-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 24px;
+      border: 2px solid rgba(139,92,246,0);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      pointer-events: none;
+    }
+    .transform-ring.active {
+      border-color: rgba(139,92,246,0.6);
+      box-shadow: 0 0 20px rgba(139,92,246,0.3), inset 0 0 20px rgba(139,92,246,0.05);
+      animation: pulse-ring 1s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+
+    /* ── Step indicator below phone ── */
+    .steps {
+      display: flex;
+      gap: 8px;
+      margin-top: 28px;
+      align-items: center;
+    }
+    .step {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transition: background 0.4s ease, transform 0.4s ease;
+    }
+    .step.active {
+      background: rgba(139,92,246,0.9);
+      transform: scale(1.4);
+    }
+    .step.done {
+      background: rgba(139,92,246,0.4);
+    }
+
+    /* ── Labels ── */
+    .label {
+      margin-top: 16px;
+      font-size: 12px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: center;
+      min-height: 18px;
+      transition: opacity 0.4s ease;
+    }
+
+    /* ── Replay button ── */
+    .replay-btn {
+      margin-top: 20px;
+      padding: 10px 28px;
+      background: rgba(139,92,246,0.15);
+      border: 1px solid rgba(139,92,246,0.4);
+      border-radius: 100px;
+      color: rgba(139,92,246,0.9);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.5s ease, transform 0.5s ease, background 0.2s ease;
+    }
+    .replay-btn.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .replay-btn:hover {
+      background: rgba(139,92,246,0.25);
+    }
+
+    /* Swipe hint */
+    .swipe-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.06em;
+    }
+
+    .home-bar {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+    }
+
+    /* Flash overlay for transform moment */
+    .flash {
+      position: absolute;
+      inset: 0;
+      border-radius: 50px;
+      background: rgba(139,92,246,0.08);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+    .flash.active {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Bokeh background -->
+  <div class="bokeh">
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <!-- Phone -->
+  <div class="phone">
+    <div class="screen">
+      <div class="stars"></div>
+      <div class="flash" id="flash"></div>
+
+      <!-- Dynamic island -->
+      <div class="island"></div>
+
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span class="status-time">6:47</span>
+        <div class="status-icons">
+          <!-- Signal -->
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="16" width="4" height="6" rx="1"/><rect x="7" y="11" width="4" height="11" rx="1" opacity=".7"/><rect x="13" y="6" width="4" height="16" rx="1" opacity=".4"/><rect x="19" y="1" width="4" height="21" rx="1" opacity=".2"/></svg>
+          <!-- WiFi -->
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0-4a6 6 0 0 1 4.24 1.76l-1.42 1.42A4 4 0 0 0 12 16a4 4 0 0 0-2.83 1.17L7.76 15.76A6 6 0 0 1 12 14zm0-4a10 10 0 0 1 7.07 2.93l-1.41 1.41A8 8 0 0 0 12 12a8 8 0 0 0-5.66 2.34L4.93 12.93A10 10 0 0 1 12 10z"/></svg>
+          <!-- Battery -->
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M20 10h2v4h-2z"/><rect x="3.5" y="8.5" width="13" height="7" rx="1"/></svg>
+        </div>
+      </div>
+
+      <!-- Clock -->
+      <div class="lock-clock">
+        <div class="clock-time">6:47</div>
+        <div class="clock-date">Wednesday, June 11</div>
+      </div>
+
+      <!-- Notification area -->
+      <div class="notif-area" style="position:relative;">
+
+        <!-- Message notification -->
+        <div class="notif-card notif-message" id="notifMessage">
+          <div class="transform-ring" id="transformRing"></div>
+          <div class="notif-header">
+            <div class="notif-app-icon icon-messages">💬</div>
+            <span class="notif-app-name">Messages</span>
+            <span class="notif-time">now</span>
+          </div>
+          <div class="notif-sender">Bella</div>
+          <div class="notif-text">I'd really like fried chicken for dinner, can you pick some up on the way home xx</div>
+        </div>
+
+        <!-- Haiku notification -->
+        <div class="notif-card notif-haiku" id="notifHaiku">
+          <div class="notif-header">
+            <div class="notif-app-icon icon-haiku">
+              <!-- Leaf SVG -->
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C12 2 6 8 6 13a6 6 0 0 0 12 0C18 8 12 2 12 2z"/><line x1="12" y1="19" x2="12" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <span class="notif-app-name">haiku · Messages</span>
+            <span class="notif-time">now</span>
+          </div>
+          <div class="haiku-lines">
+            oil and salt calling<br>
+            a hunger waits at the door<br>
+            golden wings, come home
+          </div>
+          <div class="haiku-source">from Bella</div>
+        </div>
+
+      </div>
+
+      <!-- Swipe hint -->
+      <div class="swipe-hint">swipe up to unlock</div>
+      <div class="home-bar"></div>
+    </div>
+  </div>
+
+  <!-- Step dots -->
+  <div class="steps">
+    <div class="step active" id="step1"></div>
+    <div class="step" id="step2"></div>
+    <div class="step" id="step3"></div>
+  </div>
+
+  <!-- Label -->
+  <div class="label" id="label">Notification arrives</div>
+
+  <!-- Replay -->
+  <button class="replay-btn" id="replayBtn" onclick="runSequence()">Replay</button>
+
+  <script>
+    const notifMessage  = document.getElementById('notifMessage');
+    const notifHaiku    = document.getElementById('notifHaiku');
+    const transformRing = document.getElementById('transformRing');
+    const flash         = document.getElementById('flash');
+    const label         = document.getElementById('label');
+    const replayBtn     = document.getElementById('replayBtn');
+    const steps         = [
+      document.getElementById('step1'),
+      document.getElementById('step2'),
+      document.getElementById('step3'),
+    ];
+
+    function setStep(n) {
+      steps.forEach((s, i) => {
+        s.classList.remove('active', 'done');
+        if (i < n)  s.classList.add('done');
+        if (i === n) s.classList.add('active');
+      });
+    }
+
+    function setLabel(text) {
+      label.style.opacity = '0';
+      setTimeout(() => {
+        label.textContent = text;
+        label.style.opacity = '1';
+      }, 200);
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function runSequence() {
+      // Reset
+      replayBtn.classList.remove('visible');
+      notifMessage.classList.remove('visible');
+      notifHaiku.classList.remove('visible');
+      transformRing.classList.remove('active');
+      flash.classList.remove('active');
+      setStep(0);
+
+      await wait(300);
+
+      // Step 1: notification slides in
+      setLabel('Notification arrives');
+      setStep(0);
+      await wait(500);
+      notifMessage.classList.add('visible');
+
+      // Step 2: transforming
+      await wait(2200);
+      setStep(1);
+      setLabel('Claude is writing your haiku…');
+      transformRing.classList.add('active');
+
+      await wait(1600);
+
+      // Flash transition
+      flash.classList.add('active');
+      await wait(150);
+      flash.classList.remove('active');
+      transformRing.classList.remove('active');
+      notifMessage.style.opacity = '0';
+      notifMessage.style.transform = 'translateY(-8px)';
+
+      // Step 3: haiku appears
+      await wait(200);
+      setStep(2);
+      setLabel('Your lock screen, now a poem');
+      notifHaiku.classList.add('visible');
+
+      // Replay
+      await wait(3000);
+      replayBtn.classList.add('visible');
+    }
+
+    // Auto-play on load
+    window.addEventListener('load', () => {
+      setTimeout(runSequence, 800);
+    });
+  </script>
+</body>
+</html>
