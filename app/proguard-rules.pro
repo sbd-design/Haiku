@@ -1,0 +1,2 @@
+-keep class com.haiku.app.api.** { *; }
+-keep class com.haiku.app.data.db.** { *; }
